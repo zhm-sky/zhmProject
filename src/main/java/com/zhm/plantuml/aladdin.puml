@@ -1,0 +1,138 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "nginx" as nginx
+
+participant "前端" as aladdinFront
+
+participant "服务端" as aladdinServer
+
+participant "文件服务" as fileServer
+
+participant "jenkins" as jenkins
+
+participant "小章鱼" as octopus
+
+ queue rabbitmq
+
+participant "日志服务" as logServer
+
+participant "sonar" as sonar
+
+participant "anna中转服务" as anna
+
+== 新增部署单元 ==
+
+user -> aladdinFront: 新增部署单元
+activate user
+
+aladdinFront -> aladdinServer: 发起请求
+activate aladdinFront
+
+aladdinServer -> aladdinServer: 数据校验
+activate aladdinServer
+
+note right of aladdinServer: 这里 aladdin 调用 aladdin_file_server \n 进行文件上传
+
+aladdinServer -> fileServer: 配置 sonar checkstyle \n 规则文件
+activate fileServer
+
+fileServer -> fileServer: 上传选中的规则文件
+deactivate fileServer
+
+fileServer --> aladdinServer: 返回服务端上传成功
+deactivate aladdinServer
+
+aladdinServer --> aladdinFront: 返回前端请求成功
+deactivate aladdinFront
+
+aladdinFront --> user: 返回成功
+deactivate user
+
+== 任务构建 ==
+
+alt aladdin 构建
+
+note right of aladdinServer: 模板默认开启 sonar 检查 \n 以及 maven 依赖分析
+
+user -> aladdinFront: 任务构建
+activate user
+
+aladdinFront -> aladdinServer: 发起请求
+activate aladdinFront
+
+aladdinServer -> aladdinServer: 开始任务构建
+activate aladdinServer
+
+aladdinServer -> "jenkins": 发起请求
+
+jenkins -> jenkins: 构建
+activate jenkins
+
+aladdinServer -> octopus: CD 上传 jar 包 war 包
+activate octopus
+
+octopus -> octopus: 部署
+deactivate octopus
+
+jenkins -> rabbitmq : jenkins log 消息丢到 mq
+deactivate jenkins
+
+...
+
+logServer -> rabbitmq:  监听每台 jenkins master \n 消费 jenkins log 消息
+activate logServer
+
+logServer -> logServer: 保存数据
+deactivate logServer
+
+note right of aladdinServer: 所有的sonar请求都是token认证,httpClient请求
+
+aladdinServer -> sonar: 创建数据采集队列，采集 sonar 数据
+activate sonar
+
+sonar -> sonar:  sonar 服务器开启 \n sonar 检测
+
+sonar --> aladdinServer: 返回数据采集结果
+deactivate sonar
+
+else 才云流水线构建
+
+note right of aladdinServer: 假设部署单元有pr 自动触发才云流水线
+
+aladdinServer -> anna: 使用才云流水线
+activate anna
+
+anna -> anna: 才云流水线构建
+deactivate anna
+
+aladdinServer -> aladdinServer: 创建 job 队列
+
+aladdinServer -> aladdinFront: 发送 websocket 消息
+
+aladdinFront -> aladdinFront: 前端收到消息刷新 构建状态
+
+aladdinServer -> rabbitmq: 构建信息丢到 rabbitmq
+
+...
+
+rabbitmq -> aladdinServer: 订阅消息
+
+...
+
+aladdinServer -> aladdinServer: 逻辑处理
+deactivate aladdinServer
+
+
+end
+
+aladdinServer --> aladdinFront: 返回成功
+deactivate aladdinFront
+
+aladdinFront --> user: 返回成功
+deactivate user
+
+@enduml
