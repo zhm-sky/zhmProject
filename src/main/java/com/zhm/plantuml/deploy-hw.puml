@@ -1,0 +1,41 @@
+@startuml
+
+title XingNG-Web
+
+actor User
+rectangle SQ {
+    database Config <<Oracle>> as sq_config_db
+}
+
+rectangle HW {
+    rectangle "kubernetes"{
+     node "XingNG-Web" <<Java>> as gui
+     node Ingress
+
+     node "UserApp" as userapp1
+    }
+
+    node "UserApp" as userapp2
+    database Config <<Oracle>> as hw_config_db
+    database Data <<Oracle>> as hw_data_db
+    database Redis <<Redis>> as redis
+    database ElasticSearch as es
+    database HBase as hbase
+    storage Zookeeper as zk
+    storage Apollo as apollo
+}
+
+User -- Ingress
+sq_config_db -- hw_config_db
+gui -- hw_config_db
+gui -- redis
+gui -- hbase
+gui -- es
+gui -- zk
+gui -- apollo
+gui -up- Ingress
+gui -- hw_data_db
+userapp1 -- gui
+userapp2 -- Ingress
+
+@enduml

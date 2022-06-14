@@ -1,0 +1,65 @@
+@startuml
+
+title 流控规则调用时序图
+
+autonumber
+
+actor "用户" as user
+
+participant "sentinel-dashboard" as dashboard
+
+participant "Nacos" as nacos
+
+participant "sentinel-client" as client
+
+participant "BestStatisticSlot" as slot #orange
+
+participant BestMetricsManager as manager #orange
+
+participant BestArrayMetric as arrayMetric #orange
+
+participant Q9FlowRuleChecker as checker #orange
+
+participant BestMetricTimerListener as listener #orange
+
+participant Q9SentinelClient as q9Client #orange
+
+== 流控规则 ==
+
+user -> dashboard: 新增流控规则
+activate user
+activate dashboard
+
+dashboard -> dashboard: 编辑流控规则
+
+|||
+
+dashboard -> client: 流控规则处理 \n
+
+activate client
+client -> client: BestStatisticSlot() \n  重写 entry() 方法
+
+slot -> manager: entry()方法 getBestNode()
+
+manager -> arrayMetric: 根据 resourceName 和 resourceType \n 获取 avgThread 统计指标
+
+arrayMetric -> arrayMetric: avgThread 指标的计算和存储
+
+checker -> arrayMetric: 获取 avgThread
+
+listener -> listener: 添加 avgThread
+
+q9Client -> q9Client: 通过反射获取 FlowRuleManager 线程池,\n停掉线程池任务并另起新线程池执行我们扩展的任务
+
+q9Client -> listener: 执行新任务
+
+listener --> dashboard: 返回结果
+deactivate client
+
+dashboard --> user: 返回结果
+deactivate dashboard
+deactivate user
+
+
+
+@enduml

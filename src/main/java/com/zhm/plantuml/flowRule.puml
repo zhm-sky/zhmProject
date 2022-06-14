@@ -1,0 +1,93 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "前端" as aladdinFront
+
+participant "aladdin" as aladdinServer
+
+ queue rabbitmq
+
+
+== 新增/编辑部署单元 ==
+
+user -> aladdinFront: 新增/编辑部署单元
+
+aladdinFront -> aladdinServer: 发起请求
+
+aladdinServer -> aladdinServer: 数据校验
+
+note right of aladdinServer: 这里 aladdin 调用 aladdin_file_server \n 进行文件上传
+
+aladdinServer -> fileServer: 配置 sonar checkstyle \n 规则文件
+
+fileServer -> fileServer: 上传选中的规则文件
+
+fileServer --> aladdinServer: 返回服务端上传成功
+
+aladdinServer --> aladdinFront: 返回前端请求成功
+
+aladdinFront --> user: 返回成功
+
+== 任务构建 ==
+
+alt aladdin 构建
+
+note right of aladdinServer: 模板默认开启 sonar 检查 \n 以及 maven 依赖分析
+
+aladdinServer -> aladdinServer: 开始任务构建
+
+aladdinServer -> "jenkins": 发起请求
+
+jenkins -> jenkins: 编译、打包、上传、部署
+
+jenkins -> rabbitmq : jenkins log 消息丢到 mq
+
+...
+
+logServer -> rabbitmq: 消费 jenkins log 消息
+
+
+aladdinServer -> logServer: maven 依赖分析
+
+logServer -> logServer: 保存数据
+
+aladdinServer -> sonar: 采集 sonar 数据
+
+sonar -> sonar:  sonar 服务器开启 \n sonar 检测
+
+sonar --> aladdinServer: 返回数据采集结果
+
+else 才云流水线构建
+
+note right of aladdinServer: 假设部署单元有pr 自动触发才云流水线
+
+aladdinServer -> anna: 使用才云流水线
+
+anna -> anna: 才云流水线构建
+
+aladdinServer -> aladdinServer: 创建 job 队列
+
+aladdinServer -> aladdinFront: 发送 websocket 消息
+
+aladdinFront -> aladdinFront: 前端收到消息刷新 构建状态
+
+aladdinServer -> rabbitmq: 构建信息丢到 rabbitmq
+
+...
+
+rabbitmq -> aladdinServer: 订阅消息
+
+...
+
+aladdinServer -> aladdinServer: 逻辑处理
+
+end
+
+aladdinServer --> aladdinFront: 返回成功
+
+aladdinFront --> user: 返回成功
+
+@enduml

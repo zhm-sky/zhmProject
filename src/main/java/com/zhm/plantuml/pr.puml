@@ -1,0 +1,53 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "前端" as aladdinFront
+
+participant "aladdin" as aladdinServer
+
+participant "bitbucket" as bitbucket
+
+participant "jira" as jira
+
+ queue rabbitmq
+
+== 新增/编辑部署单元 ==
+
+user -> aladdinFront: 新增/编辑部署单元
+
+note right of aladdinFront: 只有Web端类型的系统有 \n Code Review 开关
+
+aladdinFront -> aladdinServer: 开启 Code Review 开关
+
+aladdinServer -> aladdinServer: cicd_deploy_unit_code_review 新增一条数据 \n
+
+aladdinServer -> rabbitmq: receiveMessage.handleCodeReview 定时轮循(休眠10s)
+
+rabbitmq --> aladdinServer:
+
+note right of aladdinServer: handleCodeReview 收集数据
+
+alt 提交状态是OPEN(提交合并)并且PR关联的Jira issue获取方式是BITBUCKET_PR_WEB(bitbucket pr页面获取
+
+aladdinServer -> aladdinServer: 判断部署单元是否开启CodeReview开关。
+
+aladdinServer -> bitbucket: getJiraListFromBitbucket 从bitbucket上获取jira issue列表
+
+bitbucket --> aladdinServer: 返回结果
+
+aladdinServer -> jira: bitbucketPrWebHandle 根据issue key 获取 issue信息
+
+jira --> aladdinServer: 返回结果
+
+aladdinServer -> aladdinServer: aladdin_jira_issue 表新增数据，根据Jira issue获取方式保存不同的数据，组装，最后保存到 aladdin_code_review_pr 表
+
+else 提交状态是MERGE(已合并)
+
+aladdinServer -> aladdinServer: 更新 aladdin_code_review_pr 表
+
+end
+
+@enduml

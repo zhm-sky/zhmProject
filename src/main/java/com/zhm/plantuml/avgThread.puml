@@ -1,0 +1,22 @@
+@startuml
+
+autonumber
+
+
+BestStatisticSlot -> BestMetricsManager : 调用 getBestNode() 方法
+
+BestMetricsManager -> BestArrayMetric : 根据resourceName 和 resourceType \n获取统计指标
+
+BestArrayMetric -> BestArrayMetric : 进行指标计算和存储
+
+Q9FlowRuleChecker -> BestArrayMetric : 指标从 BestArrayMetric 进行获取
+
+BestMetricTimerListener -> BestMetricTimerListener : 添加计算的指标
+
+Q9SentinelClient -> Q9SentinelClient : 通过反射获取 FlowRuleManager 线程池,\n停掉线程池任务并另起新线程池执行我们扩展的任务
+
+Q9SentinelClient -> BestMetricTimerListener : 执行新任务
+
+
+
+@enduml
