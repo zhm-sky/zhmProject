@@ -17,16 +17,20 @@ participant "jira" as jira
 == 新增/编辑部署单元 ==
 
 user -> aladdinFront: 新增/编辑部署单元
+activate aladdinFront
 
 note right of aladdinFront: 只有Web端类型的系统有 \n Code Review 开关
 
 aladdinFront -> aladdinServer: 开启 Code Review 开关
+activate aladdinServer
 
 aladdinServer -> aladdinServer: cicd_deploy_unit_code_review 新增一条数据 \n
 
 aladdinServer -> rabbitmq: receiveMessage.handleCodeReview 定时轮循(休眠10s)
+activate rabbitmq
 
-rabbitmq --> aladdinServer:
+rabbitmq --> aladdinServer: 返回结果
+deactivate rabbitmq
 
 note right of aladdinServer: handleCodeReview 收集数据
 
@@ -35,18 +39,28 @@ alt 提交状态是OPEN(提交合并)并且PR关联的Jira issue获取方式是B
 aladdinServer -> aladdinServer: 判断部署单元是否开启CodeReview开关。
 
 aladdinServer -> bitbucket: getJiraListFromBitbucket 从bitbucket上获取jira issue列表
+activate bitbucket
 
 bitbucket --> aladdinServer: 返回结果
+deactivate bitbucket
 
 aladdinServer -> jira: bitbucketPrWebHandle 根据issue key 获取 issue信息
+activate jira
 
 jira --> aladdinServer: 返回结果
+deactivate jira
 
 aladdinServer -> aladdinServer: aladdin_jira_issue 表新增数据，根据Jira issue获取方式保存不同的数据，组装，最后保存到 aladdin_code_review_pr 表
 
 else 提交状态是MERGE(已合并)
 
 aladdinServer -> aladdinServer: 更新 aladdin_code_review_pr 表
+
+aladdinServer --> aladdinFront: 返回结果
+deactivate aladdinServer
+
+aladdinFront --> user: 返回结果
+deactivate aladdinFront
 
 end
 
