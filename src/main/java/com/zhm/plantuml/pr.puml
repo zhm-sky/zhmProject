@@ -26,7 +26,7 @@ activate aladdinServer
 
 aladdinServer -> aladdinServer: cicd_deploy_unit_code_review 新增一条数据 \n
 
-aladdinServer -> rabbitmq: receiveMessage.handleCodeReview 定时轮循(休眠10s)
+aladdinServer -> rabbitmq: receiveMessage.handleCodeReview(elsa.rabbitmq.queue.codereview)
 activate rabbitmq
 
 rabbitmq --> aladdinServer: 返回结果
