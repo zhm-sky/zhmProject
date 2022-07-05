@@ -1,0 +1,33 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "前端" as aladdinFront
+
+participant "aladdin" as aladdinServer
+
+
+
+user -> aladdinFront: 查询codeReview人员统计信息
+activate aladdinFront
+
+note right of aladdinFront: 这里人员pr数据统计入库和数据库查询是独立存在的 \n 为了方便流程图查看放在一起
+
+aladdinFront -> aladdinServer: 查询
+
+aladdinServer -> aladdinServer: 1.eventBus.fire() 发送统计事件 \n 2.eventBus.listener() 监听事件  \n 3.count() 统计 \n 4.入库
+
+aladdinServer -> aladdinServer: 查询
+activate aladdinServer
+
+
+aladdinServer --> aladdinFront: 返回结果
+deactivate aladdinServer
+
+aladdinFront --> user: 返回结果
+deactivate aladdinFront
+
+
+@enduml
