@@ -1,0 +1,30 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+participant "前端" as front
+participant "aladdin" as aladdin
+database "数据库" as mysql
+
+user -> front: 选择查询条件
+
+note right of front: 业务规则：\n 1.仓库查询字段是不为必选字段。\n 2.仓库是可多选的。\n 3.仓库下拉列表由时间决定，当选择时间变化时，仓库字段也会被重置。\n4.其他相关字段的下拉列表由时间与仓库字段查询而来，当时间或者仓库字段变更时，\n 相关字段列表会相应的变化，同时字段框也会进行重置
+
+front -> aladdin: getPrSearchParamList 获取筛选条件
+
+aladdin --> front: 返回所有查询条件结果
+
+front -> front: 根据查询条件做一遍筛选
+
+front -> aladdin: prListPagination 点击查询
+
+aladdin -> mysql:  根据前端传过来的查询条件进行数据库查询
+
+mysql --> aladdin: 返回结果
+ 
+aladdin --> front: 返回结果
+
+front --> user: 返回结果
+
+@enduml

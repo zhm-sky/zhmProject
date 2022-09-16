@@ -1,0 +1,51 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "前端" as front
+
+participant "aladdin" as aladdin
+
+participant "jira" as jira
+
+database "数据库" as mysql
+
+user -> front: 点击同步/查询按钮
+
+front -> aladdin: 执行请求
+
+alt 查询
+
+note right of aladdin: 对于查询按钮 \n 直接查询数据库
+
+aladdin -> mysql: 查询需求维度数据
+
+mysql --> aladdin: 返回结果
+
+aladdin --> front: 返回结果
+
+front --> user: 返回结果
+
+else 同步
+
+note right of aladdin: 对于同步按钮， \n 是先查询jira 处理后落库
+
+aladdin -> jira: 拉取需求数据
+
+jira --> aladdin: 返回结果
+
+aladdin -> aladdin: 需求数据处理
+
+aladdin -> mysql: 同步到数据库
+
+mysql --> aladdin: 返回结果
+
+aladdin --> front: 返回结果
+
+front --> user: 返回结果
+
+end
+
+@enduml

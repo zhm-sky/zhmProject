@@ -1,0 +1,39 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "xingng-gui" as gui
+
+participant "xingng-registrar" as registrar
+
+participant "注册中心管理组件" as manager
+
+participant "注册关系管理组件" as relation
+
+user -> gui: 注册
+activate gui
+
+gui -> registrar: 执行注册请求
+activate registrar
+
+registrar -> manager: 注册逻辑处理
+activate manager
+
+manager -> relation: 创建注册对象
+activate relation
+
+relation --> manager: 返回结果
+deactivate relation
+
+manager --> registrar: 返回结果
+deactivate manager
+
+registrar --> gui: 返回结果
+deactivate registrar
+
+gui --> user: 返回结果
+deactivate gui
+
+@enduml
