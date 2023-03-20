@@ -1,0 +1,58 @@
+@startuml
+
+autonumber
+
+actor "客服/客户" as user 
+
+participant "星门系统" as star
+
+participant "送货商" as deliver
+
+participant "仓库现场" as house
+
+participant "手持设备" as hand
+
+participant "客服" as service
+
+participant "订柜员" as clerk
+
+participant "装柜计划员" as plan
+
+
+user -> star : 建立到货预报
+note right of user : 录入客户提供的收货凭证号、司机姓名/电话、 \n客户的唛头标记及预计到达仓库的时间等信息。\n若有订单则关联订单。\n疑问？有可能没有订单吗？是指客户未下单直接运送货物到仓？
+
+star -> star : 到货预报录入系统
+
+deliver -> house : 送货到仓
+
+house -> hand : 收货登记
+
+hand -> hand : 生成收货报竣单
+note right of hand : 报竣单内容：\n送货凭证单号/照片，实收数量， \n货物特征标识，货物特征照片，\n货损货差登记（配有照片）\n订单和收货报竣单的关系？\n若无法分出（为什么无法分出，没订单？），客户是按照什么规则拆分的
+
+service -> star : 报竣单关联到订单或新建订单
+
+house -> house : 按订单打唛贴唛
+
+house -> hand : 入库，入库报竣单
+
+house -> house : 称重量方
+
+service -> star : 订单确认，状态为 可发运
+
+clerk -> star : 订柜，登记订柜信息
+
+plan -> star : 预装柜，生成预装柜单
+
+plan -> star : 预装柜关联订柜柜登记
+
+plan -> star : 生成拣货工单下发到仓库
+
+house -> hand : 拣货出库，根据拣货工单完成货物出库
+
+house -> hand : 根据装柜工单装柜
+
+
+
+@enduml

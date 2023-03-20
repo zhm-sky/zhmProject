@@ -1,0 +1,62 @@
+@startuml
+
+autonumber
+
+actor "用户" as user
+
+participant "星门前端" as web
+
+participant "星门" as star
+
+participant "集运" as cts
+
+== 入库 ==
+
+user -> web: 查询子唛头
+
+web -> web: 根据订单号查询子唛头列表
+activate web
+note right of web: 1. sg_waybill \n2.sg_weight_volume \n3.sg_waybill_aprroval_record
+
+web --> user: 返回结果
+deactivate web
+
+user -> web: 删除/修改子唛头
+
+web -> web: 前端处理
+activate web
+
+web -> star: 提交要处理的子唛头数据
+activate star
+
+star -> star: 根据修改类型分组分别处理
+
+star -> star: 保存 子唛头修改记录
+note left of star: 保存修改记录 sg_waybill_aprroval_record
+
+star -> star: 删除子唛头数据
+note left of star: 删除子唛头逻辑: \n1.收货报竣的逻辑处理，订单-收货报竣 n:n 所有场景考虑，关联关系和状态等判断 \n2. sg_order 收货数量、称重数量、打印数量、订单状态 \n3.删除sg_way_bill、sg_box_tag \n4.删除sg_weight_volume
+
+star -> star: 修改子唛头数据
+note left of star: 修改子唛头逻辑: 1.sg_weight_volume 长宽高、重量、体积
+
+star -> cts:
+activate cts
+
+cts -> cts: 数据处理
+note right of cts: 1.尺寸重量信息、账单信息等
+
+cts --> star: 返回结果
+deactivate cts
+
+star --> web: 返回结果
+deactivate star
+
+
+web --> user: 返回结果
+deactivate web
+
+
+== 入库 ==
+
+@enduml
